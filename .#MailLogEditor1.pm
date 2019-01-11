@@ -1,1 +1,0 @@
-atakahashi@localhost.localdomain.4862:1547121565
