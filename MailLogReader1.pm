@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-package MailLogEditor1;
+package MailLogReader1;
 use strict;
 
 sub foo {"BARRR"}
@@ -17,7 +17,7 @@ sub sum {
 sub show_ip_warnings {
   my ($this, @files) = @_;
   local @ARGV = @files;
-  local $_; # 他所の関数から呼ばれたときのため。
+  local $_; # 他所の関数から呼ばれたときのため
 
   my %stat;
   while (<>) {
@@ -59,7 +59,7 @@ sub show_ip_warnings {
 
 unless (caller) {
   my $method = $ARGV[0];
-  print MailLogEditor1->$method(@ARGV[1..$#ARGV]), "\n";
+  print MailLogReader1->$method(@ARGV[1..$#ARGV]), "\n";
   print "\n";
 }
 
