@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-package MailLogEditor1;
+package MailLogReader2;
 use strict;
 
 sub foo {"BARRR"}
@@ -13,6 +13,29 @@ sub sum {
   }
   $sum;
 }
+
+sub group_by_queueid {
+  my ($this, @files) = @_;
+  local @ARGV = @files;
+  local $_;
+
+  while (<>) {
+    chomp;
+    my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)
+      = m{^
+	  (\w+) \s+ (\d+) \s+
+	  (\d+):(\d+):(\d+)\s+
+	  ([-\.\w]+)\s+
+	  postfix/(\w+)\[(\d+)\]:\s+
+	  ([^:\s]+):
+       }x
+	 or do { warn $_; next};
+    print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)),"\n";
+
+  }
+}
+
+
 
 sub show_ip_warnings {
   my ($this, @files) = @_;
@@ -59,7 +82,7 @@ sub show_ip_warnings {
 
 unless (caller) {
   my $method = $ARGV[0];
-  print MailLogEditor1->$method(@ARGV[1..$#ARGV]), "\n";
+  print MailLogReader2->$method(@ARGV[1..$#ARGV]), "\n";
   print "\n";
 }
 
