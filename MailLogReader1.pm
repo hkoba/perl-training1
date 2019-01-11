@@ -31,7 +31,7 @@ sub group_by_queueid {
 	  postfix/(\w+)\[(\d+)\]:\s+ # postfix/pickup[4249]:
 	  ([^:\s]+):                 # 5DB5042448:
        }x
-	 or next;
+	 or do { warn $_; next};
     print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)), "\n";
   }
 }
