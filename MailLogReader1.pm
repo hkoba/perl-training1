@@ -14,6 +14,8 @@ sub sum {
   $sum;
 }
 
+use Data::Dumper;
+
 sub group_by_queueid {
   my ($this, @files) = @_;
   local @ARGV = @files;
@@ -37,9 +39,9 @@ sub group_by_queueid {
     # print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)), "\n";
 
 
-    # my $queue = $queue{$queueid} //= +{};
+    my $queue = $queue{$queueid} //= +{queueid => $queueid};
 
-    if ($text =~ m{^(from|to)=}) {
+    if (my ($key) = $text =~ m{^(from|to)=}) {
       # ', ' で区切られているケース.
 
       # 末尾の (...) を捨てる (s/パターン/置換文字列/ は置換)
@@ -47,14 +49,18 @@ sub group_by_queueid {
       my $comment = $1;
 
       my @elems = split /, /, $text;
-      my @kv = map {split /=/, $_, 2} @elems;
-      print @kv, "\n";
+      my $kv = +{map {split /=/, $_, 2} @elems};
+      $kv->{comment} = $comment;
 
-    } elsif ($text =~ m{^(uid|message-id|client)=}) {
+      push @{$queue->{$key}}, $kv;
+
+    } elsif (($key, my $rest) = $text =~ m{^(uid|message-id|client)=(.*)}) {
+      $queue->{$key} = $rest;
       # ' '
-    } elsif ($text =~ m{^host }) {
     } elsif ($text eq 'removed') {
+      print Dumper($queue), "\n";
     } else {
+      push @{$queue->{other}}, $text;
     }
 
     # print join("\t", $queueid, $text), "\n";
