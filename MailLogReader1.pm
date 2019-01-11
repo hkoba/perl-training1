@@ -19,20 +19,46 @@ sub group_by_queueid {
   local @ARGV = @files;
   local $_; # 他所の関数から呼ばれたときのため
 
-  my %stat;
+  my %queue;
   while (<>) {
     # $_ に、一行分、読み込まれる
     chomp; # chomp($_);
-    my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)
+    my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid, $text)
       = m{^
 	  (\w+) \s+ (\d+)\s+         # Jan 06
 	  (\d+):(\d+):(\d+)\s+       # 03:31:12
 	  ([-\.\w]+)\s+              # newera
 	  postfix/(\w+)\[(\d+)\]:\s+ # postfix/pickup[4249]:
-	  ([^:\s]+):                 # 5DB5042448:
+	  ([\dA-F]+):\s+             # 5DB5042448:
+	  (.*)
        }x
-	 or do { warn $_; next};
-    print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)), "\n";
+	 or next;
+
+    # print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)), "\n";
+
+
+    # my $queue = $queue{$queueid} //= +{};
+
+    if ($text =~ m{^(from|to)=}) {
+      # ', ' で区切られているケース.
+
+      # 末尾の (...) を捨てる (s/パターン/置換文字列/ は置換)
+      $text =~ s/\s+(\(.*\))$//;
+      my $comment = $1;
+
+      my @elems = split /, /, $text;
+      my @kv = map {split /=/, $_, 2} @elems;
+      print @kv, "\n";
+
+    } elsif ($text =~ m{^(uid|message-id|client)=}) {
+      # ' '
+    } elsif ($text =~ m{^host }) {
+    } elsif ($text eq 'removed') {
+    } else {
+    }
+
+    # print join("\t", $queueid, $text), "\n";
+
   }
 }
 
