@@ -14,6 +14,28 @@ sub sum {
   $sum;
 }
 
+sub group_by_queueid {
+  my ($this, @files) = @_;
+  local @ARGV = @files;
+  local $_; # 他所の関数から呼ばれたときのため
+
+  my %stat;
+  while (<>) {
+    # $_ に、一行分、読み込まれる
+    chomp; # chomp($_);
+    my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)
+      = m{^
+	  (\w+) \s+ (\d+)\s+         # Jan 06
+	  (\d+):(\d+):(\d+)\s+       # 03:31:12
+	  ([-\.\w]+)\s+              # newera
+	  postfix/(\w+)\[(\d+)\]:\s+ # postfix/pickup[4249]:
+	  ([^:\s]+):                 # 5DB5042448:
+       }x
+	 or next;
+    print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)), "\n";
+  }
+}
+
 sub show_ip_warnings {
   my ($this, @files) = @_;
   local @ARGV = @files;
