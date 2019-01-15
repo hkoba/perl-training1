@@ -35,12 +35,16 @@ sub emit_sql_insert0 {
   $this->do_group_by_queueid(
     sub {
       my ($queue) = @_;
-      print qq{insert into maillog(queue_id,message_id,uid,client) values(}
-	, join(", ", map {
-	  defined $_ ? "'$_'" : "NULL";
-	} $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}
-	  , $queue->{client})
-	, qq{);\n};
+      # qq{..}, qq!..!  は ".." と同じ
+      # q{..}, q!..!    は '..' と同じ
+      # SQL の中に "" や '' を書きたいケースがあるので、それとぶつからないように
+
+      my $VALUES = join(", ", map {
+	# XXX: ' の escape が足りない
+	defined $_ ? "'$_'" : "NULL";
+      } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid} , $queue->{client});
+
+      print qq{insert into maillog(queue_id,message_id,uid,client) values($VALUES);\n};
     },
     @files
   );
