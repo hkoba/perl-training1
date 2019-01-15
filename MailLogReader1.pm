@@ -29,6 +29,22 @@ sub test1 {
   }
 }
 
+sub emit_sql_insert0 {
+  my ($this, @files) = @_;
+  $this->do_group_by_queueid(
+    sub {
+      my ($queue) = @_;
+      print qq{insert into maillog(queue_id,message_id,uid,client) values(}
+	, join(", ", map {
+	  defined $_ ? "'$_'" : "NULL";
+	} $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}
+	  , $queue->{client})
+	, qq{);\n};
+    },
+    @files
+  );
+}
+
 sub group_by_queueid {
   my ($this, @files) = @_;
   $this->do_group_by_queueid(
