@@ -31,6 +31,17 @@ sub test1 {
 
 sub group_by_queueid {
   my ($this, @files) = @_;
+  $this->do_group_by_queueid(
+    sub {
+      my ($queue) = @_;
+      print Dumper($queue), "\n";
+    },
+    @files
+  );
+}
+
+sub do_group_by_queueid {
+  my ($this, $sub, @files) = @_;
   local @ARGV = @files;
   local $_; # 他所の関数から呼ばれたときのため
 
@@ -71,8 +82,10 @@ sub group_by_queueid {
       $queue->{$key} = $rest;
       # ' '
     } elsif ($text eq 'removed') {
-      print Dumper($queue) if $queue->{from} and @{$queue->{from}} >= 2;
-      # print Dumper($queue), "\n";
+
+      # レコードが完結したら、 $sub を呼び出す。
+      $sub->($queue);
+
     } else {
       push @{$queue->{other}}, $text;
     }
