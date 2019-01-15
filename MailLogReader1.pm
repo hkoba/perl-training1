@@ -16,6 +16,19 @@ sub sum {
 
 use Data::Dumper;
 
+sub test1 {
+  my ($this, @files) = @_;
+  local @ARGV = @files;
+  local $_; # 他所の関数から呼ばれたときのため
+
+  my %queue;
+  while (<>) {
+    # $_ に、一行分、読み込まれる
+    chomp;
+    print "[$_]\n";
+  }
+}
+
 sub group_by_queueid {
   my ($this, @files) = @_;
   local @ARGV = @files;
