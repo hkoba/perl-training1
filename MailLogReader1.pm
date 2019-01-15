@@ -31,6 +31,7 @@ sub test1 {
 
 sub emit_sql_insert0 {
   my ($this, @files) = @_;
+  print "BEGIN;\n";
   $this->do_group_by_queueid(
     sub {
       my ($queue) = @_;
@@ -43,6 +44,8 @@ sub emit_sql_insert0 {
     },
     @files
   );
+  print "END;\n";
+  "";
 }
 
 sub group_by_queueid {
