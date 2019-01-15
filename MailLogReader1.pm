@@ -71,7 +71,8 @@ sub group_by_queueid {
       $queue->{$key} = $rest;
       # ' '
     } elsif ($text eq 'removed') {
-      print Dumper($queue), "\n";
+      print Dumper($queue) if $queue->{from} and @{$queue->{from}} >= 2;
+      # print Dumper($queue), "\n";
     } else {
       push @{$queue->{other}}, $text;
     }
