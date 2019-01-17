@@ -6,7 +6,7 @@ use Data::Dumper;
 
 sub emit_sql_insert0 {
   my ($this, @files) = @_;
-  print "BEGIN;/n";
+  print "BEGIN;\n";
   $this->do_group_by_queueid(
     sub {
       my ($queue) = @_;
@@ -14,6 +14,19 @@ sub emit_sql_insert0 {
 	defined $_ ? "'$_'" :"NULL"; #ここがよくわからない
       } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}, $queue->{client});
       print qq{insert into maillog(queue_id, message_id, uid, client) values($VALUES);\n};
+      my $to_data = $queue->{to};
+      foreach my $i (@$to_data) {
+	my $VALUES_2 = join(",", map {
+	  if (defined $_) {
+	    s/'/''/g; # substitute
+	    "'$_'"
+	  } else {
+	    "NULL";
+	  }
+	  #ここがよくわからない
+	} $queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'});
+	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay, text_data) values($VALUES_2);\n};
+      }
     },
     @files
   );
@@ -22,15 +35,32 @@ sub emit_sql_insert0 {
 }
 
 
+
 # 構造確認用の関数という認識であってますよね？
 sub group_by_queueid {
   my ($this, @files) = @_;
-  $this->do_group_by_queueid( # ここもわからなかった...do_group_by_queueidに@fileを入れている?
+  $this->do_group_by_queueid( # ここもわからなかった...do_group_by_queueidに@filesを入れている?
     sub {
       my ($queue) = @_;
-      #print Dumper($queue), "\n";
+      # print $queue->{queueid};
+      # print Dumper($queue), "\n";
+      # ここから編集
       my $to_data = $queue->{to};
-      print Dumper($to_data->{to}), "\n";
+      foreach my $i (@$to_data) {
+      	print "BEGIN;\n";
+	print "$queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'} \n";
+      	# foreach my $key (keys %$i){
+      	#   my $value = $i->{$key};
+      	#   print "$key => $value\n";
+      	# }
+      }
+      	print "END;\n";
+      # foreach my $i (@$to_data) {
+      # 	my $VALUES_2 = join(",", map {
+      # 	  defined $_ ? "'$_'" :"NOT NULL"; #ここがよくわからない
+      # 	} $queue->{queueid}, $i->{status}, $i->{to_address}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay}, $i->{text});
+      # 	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay, text_data) values($VALUES_2);\n};
+      # }
     },
     @files
   );
