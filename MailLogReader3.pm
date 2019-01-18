@@ -3,6 +3,8 @@ package MailLogReader3;
 use strict;
 use fields qw/year/;
 
+sub MY () {__PACKAGE__}
+
 use Time::Local;
 use Time::Piece;
 use Getopt::Long;
@@ -92,6 +94,14 @@ sub group_by_queueid {
   );
 }
 
+our %MONTH = qw(Jan 1 Feb 2 Mar 3 Apr 4 May 5 Jun 6 Jul 7 Aug 8 Sep 9 Oct 10 Nov 11 Dec 12);
+
+sub epoch_from_localtime {
+  (my MY $this, my ($S, $M, $H, $day, $monthName, $year)) = @_;
+  timelocal($S, $M, $H, $day, $MONTH{$monthName} - 1
+	      , $year // $this->{year});
+}
+
 sub do_group_by_queueid{
   my ($this, $sub, @files) = @_;
   local @ARGV = @files;
@@ -100,7 +110,7 @@ sub do_group_by_queueid{
   my %queue;
   while (<>) {
     chomp;
-    my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid, $text)
+    my ($monthName, $day, $H, $M, $S, $host, $prog, $pid, $queueid, $text)
       = m{^
 	  (\w+) \s+ (\d+)\s+
           (\d+):(\d+):(\d+)\s+
@@ -110,7 +120,11 @@ sub do_group_by_queueid{
           (.*)
        }x
 	 or next;
-    
+
+    my $datetime = $this->epoch_from_localtime(
+      $S, $M, $H, $day, $monthName
+    );
+
     my $queue = $queue{$queueid} //= +{queueid => $queueid}; #記号部分と$queue{$queueid}がよくわからない
     
     if (my ($key) = $text =~ m{^(from|to)=}) {
