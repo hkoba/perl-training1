@@ -23,7 +23,7 @@ sub emit_sql_insert0 {
 	  } else {
 	    "NULL";
 	  }
-	} $queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'});
+	} $queue->{queueid}, $i->{status}, $i->{to}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay});
 	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay) values($VALUES_2);\n};
       }
       my $from_data = $queue->{from};
@@ -35,7 +35,7 @@ sub emit_sql_insert0 {
 	  } else {
 	    "NULL";
 	  }
-	} $queue->{queueid}, $f->{'from'}, $f->{' nrcpt'}, $f->{' size'}, $f->{comment});
+	} $queue->{queueid}, $f->{'from'}, $f->{nrcpt}, $f->{size}, $f->{comment});
 	print qq{insert into from_data(queue_id, from_address, nrcpt, size, comment) values($VALUES_3);\n};
       }
     },
@@ -59,13 +59,13 @@ sub group_by_queueid {
       # my $to_data = $queue->{to};
       # foreach my $i (@$to_data) {
       # 	print "BEGIN;\n";
-      # 	print "$queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'} \n";
+      # 	print "$queue->{queueid}, $i->{status}, $i->{to}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay}, $i->{text} \n";
       # 	foreach my $key (keys %$i){
       # 	  my $value = $i->{$key};
       # 	  print "$key => $value\n";
       # 	}
       # }
-      	print "END;\n";
+      print "END;\n";
       # foreach my $i (@$to_data) {
       # 	my $VALUES_2 = join(",", map {
       # 	  defined $_ ? "'$_'" :"NOT NULL"; #ここがよくわからない
@@ -103,7 +103,7 @@ sub do_group_by_queueid{
       $text =~ s/\s+(\(.*\))$//; # *がわからない,スペース,().$
       my $comment = $1; # $1はどこから・・・
       
-      my @elems = split /,/, $text;
+      my @elems = split /\s*,\s*/, $text;
       my $kv = +{map {split /=/, $_, 2} @elems}; #$_,2何者なのかがわからない
       $kv->{comment} = $comment; #'status' => 'bounced',の構造を作っている？＄１が何者なのかわからなかったのでここも理解できていなかった。
       
