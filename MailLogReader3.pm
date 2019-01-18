@@ -3,6 +3,19 @@ package MailLogReader3;
 use strict;
 use fields qw/year/;
 
+sub QItem () {'MailLogReader3::QItem'}
+package MailLogReader3::QItem {
+  use fields qw(queueid from to uid message-id client other);
+};
+sub From () {'MailLogReader3::From'}
+package MailLogReader3::From {
+  use fields qw(from nrcpt size comment);
+};
+sub To () {'MailLogReader3::To'}
+package MailLogReader3::To {
+  use fields qw(status to delays comment delay dsn relay);
+};
+
 sub MY () {__PACKAGE__}
 
 use Time::Local;
@@ -26,13 +39,13 @@ sub emit_sql_insert0 {
   print "BEGIN;\n";
   $this->do_group_by_queueid(
     sub {
-      my ($queue) = @_;
+      (my QItem $queue) = @_;
       my $VALUES = join(",", map {
 	defined $_ ? "'$_'" :"NULL";
       } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}, $queue->{client});
       print qq{insert into maillog(queue_id, message_id, uid, client) values($VALUES);\n};
       my $to_data = $queue->{to};
-      foreach my $i (@$to_data) {
+      foreach my To $i (@$to_data) {
 	my $VALUES_2 = join(",", map {
 	  if (defined $_) {
 	    s/'/''/g; # substitute
@@ -44,7 +57,7 @@ sub emit_sql_insert0 {
 	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay) values($VALUES_2);\n};
       }
       my $from_data = $queue->{from};
-      foreach my $f (@$from_data) {
+      foreach my From $f (@$from_data) {
 	my $VALUES_3 = join(",", map {
 	  if (defined $_) {
 	    s/'/''/g; # substitute
