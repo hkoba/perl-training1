@@ -1,8 +1,23 @@
 #!/usr/bin/env perl
 package MailLogReader3;
 use strict;
+use fields qw/year/;
 
+use Time::Local;
+use Time::Piece;
+use Getopt::Long;
 use Data::Dumper;
+
+sub usage {
+  die join("\n", @_, <<END);
+Usage: $0 [--year=YYYY] COMMAND ARGS...
+END
+}
+
+sub new {
+  my ($class) = @_;
+  fields::new($class);
+}
 
 sub emit_sql_insert0 {
   my ($this, @files) = @_;
@@ -121,8 +136,16 @@ sub do_group_by_queueid{
 }
 
 unless (caller) {
+
+  my MY $obj = MailLogReader3->new;
+
+  $obj->{year} = localtime->year;
+
+  GetOptions("year=i" => \ $obj->{year})
+    or usage();
+
   my $method = $ARGV[0];
-  print MailLogReader3->$method(@ARGV[1..$#ARGV]), "\n";
+  print $obj->$method(@ARGV[1..$#ARGV]), "\n";
   print "\n";
 }
 
