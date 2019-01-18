@@ -11,7 +11,7 @@ sub emit_sql_insert0 {
     sub {
       my ($queue) = @_;
       my $VALUES = join(",", map {
-	defined $_ ? "'$_'" :"NULL"; #ここがよくわからない
+	defined $_ ? "'$_'" :"NULL";
       } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}, $queue->{client});
       print qq{insert into maillog(queue_id, message_id, uid, client) values($VALUES);\n};
       my $to_data = $queue->{to};
@@ -23,9 +23,20 @@ sub emit_sql_insert0 {
 	  } else {
 	    "NULL";
 	  }
-	  #ここがよくわからない
-	} $queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'});
-	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay, text_data) values($VALUES_2);\n};
+	} $queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'});
+	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay) values($VALUES_2);\n};
+      }
+      my $from_data = $queue->{from};
+      foreach my $f (@$from_data) {
+	my $VALUES_3 = join(",", map {
+	  if (defined $_) {
+	    s/'/''/g; # substitute
+	    "'$_'"
+	  } else {
+	    "NULL";
+	  }
+	} $queue->{queueid}, $f->{'from'}, $f->{' nrcpt'}, $f->{' size'}, $f->{comment});
+	print qq{insert into from_data(queue_id, from_address, nrcpt, size, comment) values($VALUES_3);\n};
       }
     },
     @files
@@ -43,17 +54,17 @@ sub group_by_queueid {
     sub {
       my ($queue) = @_;
       # print $queue->{queueid};
-      # print Dumper($queue), "\n";
+      print Dumper($queue), "\n";
       # ここから編集
-      my $to_data = $queue->{to};
-      foreach my $i (@$to_data) {
-      	print "BEGIN;\n";
-	print "$queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'} \n";
-      	# foreach my $key (keys %$i){
-      	#   my $value = $i->{$key};
-      	#   print "$key => $value\n";
-      	# }
-      }
+      # my $to_data = $queue->{to};
+      # foreach my $i (@$to_data) {
+      # 	print "BEGIN;\n";
+      # 	print "$queue->{queueid}, $i->{' status'}, $i->{to}, $i->{' delays'}, $i->{comment}, $i->{' delay'}, $i->{' dsn'}, $i->{' relay'}, $i->{' text'} \n";
+      # 	foreach my $key (keys %$i){
+      # 	  my $value = $i->{$key};
+      # 	  print "$key => $value\n";
+      # 	}
+      # }
       	print "END;\n";
       # foreach my $i (@$to_data) {
       # 	my $VALUES_2 = join(",", map {
