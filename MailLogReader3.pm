@@ -150,6 +150,8 @@ sub do_group_by_queueid{
       my $kv = +{map {split /=/, $_, 2} @elems}; #$_,2何者なのかがわからない
       $kv->{comment} = $comment; #'status' => 'bounced',の構造を作っている？＄１が何者なのかわからなかったのでここも理解できていなかった。
       
+      $kv->{$key} =~ s/^<|>$//g;
+
       push @{$queue->{$key}}, $kv; # ifでつくった$key(to|from)に$kvを入れている？
       
     } elsif (($key, my $rest) = $text =~ m{^(uid|message-id|client)=(.*)}) { #=(.*)のぶぶんがどんな処理なのかわからない
