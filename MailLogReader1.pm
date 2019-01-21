@@ -95,7 +95,7 @@ sub do_group_by_queueid {
       $text =~ s/\s+(\(.*\))$//;
       my $comment = $1;
 
-      my @elems = split /, /, $text;
+      my @elems = split /\s*,\s*/, $text;
       my $kv = +{map {split /=/, $_, 2} @elems};
       $kv->{comment} = $comment;
 

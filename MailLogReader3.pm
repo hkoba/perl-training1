@@ -37,9 +37,12 @@ sub new {
 sub emit_sql_insert0 {
   my ($this, @files) = @_;
   print "BEGIN;\n";
+  my %queueid_list;
   $this->do_group_by_queueid(
     sub {
       (my QItem $queue) = @_;
+      my $VALUES_ID = defined $queue->{'message-id'} ? "'$queue->{'message-id'}'" :"NULL";
+      print qq{insert into maillog(queue_id) values($VALUES_ID);\n} if not $queueid_list{$VALUES_ID}++;
       my $VALUES = join(",", map {
 	defined $_ ? "'$_'" :"NULL";
       } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}, $queue->{client});
@@ -95,7 +98,7 @@ sub group_by_queueid {
       # 	  print "$key => $value\n";
       # 	}
       # }
-      print "END;\n";
+      # print "END;\n";
       # foreach my $i (@$to_data) {
       # 	my $VALUES_2 = join(",", map {
       # 	  defined $_ ? "'$_'" :"NOT NULL"; #ここがよくわからない
