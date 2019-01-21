@@ -8,6 +8,5 @@ CREATE TABLE to_data
 , delay text null
 , dsn text null
 , relay text null
-, text_data text null
 , foreign key (queue_id) references maillog  (queue_id)
 );
