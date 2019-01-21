@@ -124,6 +124,25 @@ sub epoch_from_localtime {
   $epoch;
 }
 
+# ↑上記を reference 使わずに書くとこうなる↓
+sub epoch_from_localtime2 {
+  (my MY $self, my ($S, $M, $H, $day, $monthName, $year)) = @_;
+  my $epoch = timelocal($S, $M, $H, $day, $MONTH{$monthName} - 1
+			, $year // $self->{year});
+  if ($self->{_prev_epoch} and $epoch < $self->{_prev_epoch}) {
+    if (defined $year) {
+      $year++
+    } else {
+      $self->{year}++;
+    }
+    $epoch = timelocal($S, $M, $H, $day, $MONTH{$monthName} - 1
+			 , $year // $self->{year});
+  }
+  $self->{_prev_epoch} = $epoch;
+  $epoch;
+}
+
+
 sub do_group_by_queueid{
   my ($this, $sub, @files) = @_;
   local @ARGV = @files;
