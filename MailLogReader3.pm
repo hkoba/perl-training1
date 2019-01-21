@@ -156,10 +156,16 @@ sub do_group_by_queueid{
       $queue->{$key} = $rest;
     } elsif ($text eq 'removed') {
       $sub->($queue); # subを呼び出すというのがどういった処理になるのかがわからない
+      delete $queue{$queueid};
       # print Dumper($queue), "\n";
     } else {
       push @{$queue->{other}}, $text;
     }
+  }
+
+  foreach my $queueid (keys %queue) {
+    my $queue = delete $queue{$queueid};
+    $sub->($queue);
   }
 }
 
