@@ -37,6 +37,7 @@ sub new {
 sub emit_sql_insert0 {
   my ($this, @files) = @_;
   print "BEGIN;\n";
+  # queueidの重複を防ぐための記録
   my %queueid_list;
   $this->do_group_by_queueid(
     sub {
