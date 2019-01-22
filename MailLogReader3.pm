@@ -5,7 +5,7 @@ use fields qw/year _prev_epoch/;
 
 sub QItem () {'MailLogReader3::QItem'}
 package MailLogReader3::QItem {
-  use fields qw(queueid from to uid message-id client other datetime_epoch);
+  use fields qw(queueid from to uid message-id client other first_epoch);
 };
 sub From () {'MailLogReader3::From'}
 package MailLogReader3::From {
@@ -43,16 +43,16 @@ sub emit_sql_insert0 {
   $this->do_group_by_queueid(
     sub {
       (my QItem $queue) = @_;
-      # テーブルqueue_idのインサート
+      # テーブルqueueのインサート
       # my $queueid_sql; $queueid_expr; ...
       my $queueid_sql = escape_or_null($queue->{'queueid'});
-      print qq{INSERT INTO queue_id(queue_id) values($queueid_sql);\n} if not $queueid_dict{$queue->{'queueid'}}++;
+      print qq{INSERT INTO queue(queue_id) values($queueid_sql);\n} if not $queueid_dict{$queue->{'queueid'}}++;
       {
 	# テーブルmaillogのインサート
 	my $VALUES = join(",", map {
 	  escape_or_null($_);
-	} $queue->{'message-id'}, $queue->{uid}, $queue->{client} ,$queue->{datetime_epoch});
-	print qq{INSERT INTO maillog(qid, message_id, uid, client, first_epoch)
+	} $queue->{'message-id'}, $queue->{uid}, $queue->{client} ,$queue->{first_epoch});
+	print qq{INSERT INTO maillog(qid, "message-id", uid, client, first_epoch)
 VALUES((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql),$VALUES);\n};
       }
 
@@ -64,9 +64,9 @@ VALUES((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql),$VALUES);\n};
 	    escape_or_null($_);
 	  } $i->{status}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay});
 	  my $escape_email = escape_or_null($i->{to});
-	  print qq{INSERT INTO email_id(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
-	  print qq{insert into to_data(queue_id, email_id status, delays, comment, delay, dsn, relay)
-values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FROM email_id WHERE email_id = $escape_email), $VALUES);\n};
+	  print qq{INSERT INTO email(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
+	  print qq{insert into to(queue_id, email_id status, delays, comment, delay, dsn, relay)
+values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FROM email WHERE email_id = $escape_email), $VALUES);\n};
 	}
       }
 
@@ -78,9 +78,9 @@ values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FRO
 	    escape_or_null($_);
 	  } $queue->{queueid}, $f->{nrcpt}, $f->{size}, $f->{comment});
 	  my $escape_email = escape_or_null($f->{from});
-	  print qq{INSERT INTO email_id(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
-	  print qq{insert into from_data(queue_id, nrcpt, size, comment) 
-values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FROM email_id WHERE email_id = $escape_email), $VALUES);\n};
+	  print qq{INSERT INTO email(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
+	  print qq{insert into from(queue_id, nrcpt, size, comment)
+values((SELECT qid FROM queue WHERE queue_id = $queueid_sql), (SELECT qid FROM email WHERE email_id = $escape_email), $VALUES);\n};
 	}
       }
     },
@@ -205,7 +205,7 @@ sub do_group_by_queueid{
       my $kv = +{map {split /=/, $_, 2} @elems}; #$_,2何者なのかがわからない
       $kv->{comment} = $comment; #'status' => 'bounced',の構造を作っている？＄１が何者なのかわからなかったのでここも理解できていなかった。
       $kv->{datetime} = $dateTime;
-      $kv->{datetime_epoch} = $epoch;
+      $kv->{first_epoch} = $epoch;
       $kv->{$key} =~ s/^<|>$//g;
 
       push @{$queue->{$key}}, $kv; # ifでつくった$key(to|from)に$kvを入れている？
