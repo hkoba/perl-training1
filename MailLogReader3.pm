@@ -5,7 +5,7 @@ use fields qw/year _prev_epoch/;
 
 sub QItem () {'MailLogReader3::QItem'}
 package MailLogReader3::QItem {
-  use fields qw(queueid from to uid message-id client other);
+  use fields qw(queueid from to uid message-id client other datetime_epoch);
 };
 sub From () {'MailLogReader3::From'}
 package MailLogReader3::From {
