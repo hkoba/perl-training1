@@ -38,43 +38,50 @@ sub emit_sql_insert0 {
   my ($this, @files) = @_;
   print "BEGIN;\n";
   # queueidの重複を防ぐための記録
-  my %queueid_list;
+  my %queueid_dict;
+  my %email_dict;
   $this->do_group_by_queueid(
     sub {
       (my QItem $queue) = @_;
       # テーブルqueue_idのインサート
-      my $VALUES_ID = defined $queue->{'queueid'} ? "'$queue->{'queueid'}'" :"NULL";
-      print qq{INSERT INTO queue_id(queue_id) values($VALUES_ID);\n} if not $queueid_list{$VALUES_ID}++;
-      # テーブルmaillogのインサート
-      my $VALUES = join(",", map {
-	defined $_ ? "'$_'" :"NULL";
-      } $queue->{'message-id'}, $queue->{uid}, $queue->{client} ,$queue->{datetime_epoch});
-      print qq{INSERT INTO maillog(qid, message_id, uid, client, first_epoch)
-VALUES((SELECT qid FROM queue_id WHERE queue_id = $VALUES_ID),$VALUES);\n};
-      # テーブルtoのインサート
-      my $to_data = $queue->{to};
-      foreach my To $i (@$to_data) {
-	my $VALUES_2 = join(",", map {
-	  if (defined $_) {
-	    s/'/''/g; # substitute
-	    "'$_'"
-	  } else {
-	    "NULL";
-	  }
-	} $queue->{queueid}, $i->{status}, $i->{to}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay});
-	print qq{insert into to_data(queue_id, status, to_address, delays, comment, delay, dsn, relay) values($VALUES_2);\n};
+      # my $queueid_sql; $queueid_expr; ...
+      my $queueid_sql = escape_or_null($queue->{'queueid'});
+      print qq{INSERT INTO queue_id(queue_id) values($queueid_sql);\n} if not $queueid_dict{$queue->{'queueid'}}++;
+      {
+	# テーブルmaillogのインサート
+	my $VALUES = join(",", map {
+	  escape_or_null($_);
+	} $queue->{'message-id'}, $queue->{uid}, $queue->{client} ,$queue->{datetime_epoch});
+	print qq{INSERT INTO maillog(qid, message_id, uid, client, first_epoch)
+VALUES((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql),$VALUES);\n};
       }
-      my $from_data = $queue->{from};
-      foreach my From $f (@$from_data) {
-	my $VALUES_3 = join(",", map {
-	  if (defined $_) {
-	    s/'/''/g; # substitute
-	    "'$_'"
-	  } else {
-	    "NULL";
-	  }
-	} $queue->{queueid}, $f->{'from'}, $f->{nrcpt}, $f->{size}, $f->{comment});
-	print qq{insert into from_data(queue_id, from_address, nrcpt, size, comment) values($VALUES_3);\n};
+
+      {
+	# テーブルtoのインサート
+	my $to_data = $queue->{to};
+	foreach my To $i (@$to_data) {
+	  my $VALUES = join(",", map {
+	    escape_or_null($_);
+	  } $i->{status}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay});
+	  my $escape_email = escape_or_null($i->{to});
+	  print qq{INSERT INTO email_id(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
+	  print qq{insert into to_data(queue_id, email_id status, delays, comment, delay, dsn, relay)
+values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FROM email_id WHERE email_id = $escape_email), $VALUES);\n};
+	}
+      }
+
+      {
+	# テーブルfromのインサート
+	my $from_data = $queue->{from};
+	foreach my From $f (@$from_data) {
+	  my $VALUES = join(",", map {
+	    escape_or_null($_);
+	  } $queue->{queueid}, $f->{nrcpt}, $f->{size}, $f->{comment});
+	  my $escape_email = escape_or_null($f->{from});
+	  print qq{INSERT INTO email_id(email) values($escape_email);\n} if not $email_dict{$escape_email}++;
+	  print qq{insert into from_data(queue_id, nrcpt, size, comment) 
+values((SELECT qid FROM queue_id WHERE queue_id = $queueid_sql), (SELECT qid FROM email_id WHERE email_id = $escape_email), $VALUES);\n};
+	}
       }
     },
     @files
@@ -83,7 +90,16 @@ VALUES((SELECT qid FROM queue_id WHERE queue_id = $VALUES_ID),$VALUES);\n};
   "";
 }
 
-
+# XXX: 複数引数でも使えるよう拡張しても良いかも知れない。
+sub escape_or_null {
+  my ($string) = @_;
+  if (defined $string) {
+    $string =~ s/'/''/g; # substitute
+    "'$string'"
+  } else {
+    "NULL";
+  }
+}
 
 # 構造確認用の関数という認識であってますよね？
 sub group_by_queueid {
