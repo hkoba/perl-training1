@@ -45,10 +45,13 @@ sub emit_sql_insert0 {
       # テーブルqueue_idのインサート
       my $VALUES_ID = defined $queue->{'queueid'} ? "'$queue->{'queueid'}'" :"NULL";
       print qq{INSERT INTO queue_id(queue_id) values($VALUES_ID);\n} if not $queueid_list{$VALUES_ID}++;
+      # テーブルmaillogのインサート
       my $VALUES = join(",", map {
 	defined $_ ? "'$_'" :"NULL";
-      } $queue->{queueid}, $queue->{'message-id'}, $queue->{uid}, $queue->{client});
-      print qq{insert into maillog(queue_id, message_id, uid, client) values($VALUES);\n};
+      } $queue->{'message-id'}, $queue->{uid}, $queue->{client} ,$queue->{datetime_epoch});
+      print qq{INSERT INTO maillog(qid, message_id, uid, client, first_epoch)
+VALUES((SELECT qid FROM queue_id WHERE queue_id = $VALUES_ID),$VALUES);\n};
+      # テーブルtoのインサート
       my $to_data = $queue->{to};
       foreach my To $i (@$to_data) {
 	my $VALUES_2 = join(",", map {
