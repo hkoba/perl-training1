@@ -18,7 +18,6 @@ sub group_by_queueid {
   my ($this, @files) = @_;
   local @ARGV = @files;
   local $_;
-
   while (<>) {
     chomp;
     my ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)
