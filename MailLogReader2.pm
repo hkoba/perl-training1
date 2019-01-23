@@ -30,7 +30,7 @@ sub group_by_queueid {
 	  ([^:\s]+):
        }x
 	 or do { warn $_; next};
-    print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)),"\n";
+    # print join("\t", ($month, $day, $H, $M, $S, $host, $prog, $pid, $queueid)),"\n";
 
   }
 }
