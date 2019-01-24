@@ -3,6 +3,17 @@ package typing_score;
 use strict;
 use Data::Dumper;
 
+sub MY () {__PACKAGE__}
+use fields qw/output_format/;
+
+
+use Getopt::Long;
+
+sub new {
+  my ($class) = @_;
+  fields::new($class);
+}
+
 sub get_score_line_by_line {
   my ($this, @files) = @_;
   local @ARGV = @files;
@@ -21,33 +32,31 @@ sub get_score_paragraph {
   my %typing_scores;
   while (<>) {
     chomp;
-    my ($day, $unpro, $wpm)
+    my ($Y, $M, $D, $unpro, $wpm)
       = m{
-	   \=\= \s+ (\d+\/\d+\/\d+) \n
-	   \w+ \s+ \w+ \n
-	   \w+ \s+ \w+ \s+ \d+ \s+ \n
-	   \w+ \s+ \w+ \s+ \d+ \s+ \n
-	   \d+ \s+ \w+ \s+ \w+ \n
-	   \W+ \s+ \d+ \s+ \w+ \s+ \w+ \n
-	   \W+ \s+ \d+ \s+ \w+ \s+ \w+ \s+ \w+ \s+ \w+ \n
-	   \W+ \s+ \d+ \s+ \w+ \n
+	   == \s+ (\d+)\/(\d+)\/(\d+) \n
+	   [\s\S]*?
 	   unproductive \s+ \w+ \s+ \w+ \s+ (\d+\%) \s+ \n
-	   \d+ \s+ \w+ \s+ \w+ \s+ \— \s+ \d+ \s+ \w+ \s+ \w+ \n
-	   \d+ \s+ \w+ \s+ \w+ \n
-	   \w+ \s+ \w+ \s+ \d+:\d+ \s+ \n
+	   [\s\S]*?
 	   wpm \s+ (\d+) \s+ \n
 	   # (\w+ \s+ \w+)
 	   # unproductive \s+ \w+ \s+ \w+ \s+ (\d+\%)
 	   # wpm \s+ (\w+)
        }x
 	 or do {print "NOT MATCHED: $_"; next};
-    my $typing_score = $typing_scores{$day} = +{
-      day => $day,
+    my $typing_score = $typing_scores{"$Y-$M-$D"} = +{
+      day => "$Y-$M-$D",
       unproductive => $unpro,
       wpm => $wpm,
     };
 
-    print Dumper($typing_score), "\n";
+    if ($this->{output_format}) {
+      my $sub = $this->can("output_as_$this->{output_format}")
+	or die "Unknown output format: $this->{output_format}";
+      $sub->($this, $typing_score);
+    } else {
+      print Dumper($typing_score), "\n"; # "$typing_score->{day} $typing_score->{wpm}\n";
+    }
 
     # print "==ここから==\n";
     # print "$day";
@@ -57,6 +66,15 @@ sub get_score_paragraph {
   }
 }
 
+sub output_as_gnuplot {
+  (my MY $self, my $scoreRec) = @_;
+  print "$scoreRec->{day}\t$scoreRec->{wpm}\n";
+}
+
+sub output_as_html {
+  (my MY $self, my $scoreRec) =@_;
+  print "HTML: $scoreRec->{wpm}\n";
+}
 
 sub get_score{
   my ($this, @files) = @_;
@@ -101,8 +119,14 @@ sub test{
   close(IN);
 }
 unless (caller) {
+
+  my MY $obj = MY->new;
+
+  GetOptions("output_format=s", \ $obj->{output_format})
+    or die "Unknown option";
+
   my $method = $ARGV[0];
-  typing_score->$method(@ARGV[1..$#ARGV]);
+  $obj->$method(@ARGV[1..$#ARGV]);
   print "\n";
 }
 
