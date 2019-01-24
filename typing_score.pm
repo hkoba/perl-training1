@@ -41,13 +41,14 @@ sub get_score_paragraph {
 	   # wpm \s+ (\w+)
        }x
 	 or do {print "NOT MATCHED: $_"; next};
-    my $typing_scoler = $typing_scores{$day} = +{
+    my $typing_score = $typing_scores{$day} = +{
       day => $day,
       unproductive => $unpro,
       wpm => $wpm,
     };
-    
-    print Dumper($typing_scoler), "\n";
+
+    print Dumper($typing_score), "\n";
+
     # print "==ここから==\n";
     # print "$day";
     # print "$unpro";
