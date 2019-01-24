@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 package typing_score;
 use strict;
-
+use Data::Dumper;
 
 sub get_score_line_by_line {
   my ($this, @files) = @_;
@@ -18,11 +18,12 @@ sub get_score_paragraph {
   local @ARGV = @files;
   local $_;
   local $/ = ""; # パラグラフモード. コマンド行だと perl -00
+  my %typing_scores;
   while (<>) {
     chomp;
     my ($day, $unpro, $wpm)
       = m{
-	   \=\= \s+ (\d+\/\d+\/\d+ \n)
+	   \=\= \s+ (\d+\/\d+\/\d+) \n
 	   \w+ \s+ \w+ \n
 	   \w+ \s+ \w+ \s+ \d+ \s+ \n
 	   \w+ \s+ \w+ \s+ \d+ \s+ \n
@@ -30,21 +31,28 @@ sub get_score_paragraph {
 	   \W+ \s+ \d+ \s+ \w+ \s+ \w+ \n
 	   \W+ \s+ \d+ \s+ \w+ \s+ \w+ \s+ \w+ \s+ \w+ \n
 	   \W+ \s+ \d+ \s+ \w+ \n
-	   (unproductive \s+ \w+ \s+ \w+ \s+ \d+\% \s+ \n)
+	   unproductive \s+ \w+ \s+ \w+ \s+ (\d+\%) \s+ \n
 	   \d+ \s+ \w+ \s+ \w+ \s+ \— \s+ \d+ \s+ \w+ \s+ \w+ \n
 	   \d+ \s+ \w+ \s+ \w+ \n
 	   \w+ \s+ \w+ \s+ \d+:\d+ \s+ \n
-	   (wpm \s+ \d+ \s+ \n)
+	   wpm \s+ (\d+) \s+ \n
 	   # (\w+ \s+ \w+)
 	   # unproductive \s+ \w+ \s+ \w+ \s+ (\d+\%)
 	   # wpm \s+ (\w+)
        }x
 	 or do {print "NOT MATCHED: $_"; next};
-    print "==ここから==\n";
-    print "$day";
-    print "$unpro";
-    print "$wpm";
-    print "==ここまで==\n";
+    my $typing_scoler = $typing_scores{$day} = +{
+      day => $day,
+      unproductive => $unpro,
+      wpm => $wpm,
+    };
+    
+    print Dumper($typing_scoler), "\n";
+    # print "==ここから==\n";
+    # print "$day";
+    # print "$unpro";
+    # print "$wpm";
+    # print "==ここまで==\n";
   }
 }
 
