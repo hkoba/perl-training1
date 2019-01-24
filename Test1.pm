@@ -7,6 +7,14 @@ sub MY () {__PACKAGE__}
 use base 'MailLogReader3';
 use Time::Piece;
 
+sub dummy {
+  print qq{2018-12-19 03:18:55	3
+2018-12-23 03:50:19	5
+2018-12-29 04:00:09	6
+};
+  "";
+}
+
 sub new {
   my ($class) = @_;
   my MY $self = $class->SUPER::new;
