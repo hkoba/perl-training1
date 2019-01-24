@@ -5,7 +5,7 @@ use fields qw/year _prev_epoch/;
 
 sub QItem () {'MailLogReader3::QItem'}
 package MailLogReader3::QItem {
-  use fields qw(queueid from to uid message-id client other first_datetime_epoch);
+  use fields qw(queueid from to uid message-id client other first_epoch);
 };
 sub From () {'MailLogReader3::From'}
 package MailLogReader3::From {
@@ -51,7 +51,7 @@ sub emit_sql_insert0 {
 	# テーブルmaillogのインサート
 	my $VALUES = join(",", map {
 	  escape_or_null($_);
-	} $queue->{first_datetime_epoch}, $queue->{uid}, $queue->{client}, $queue->{'message-id'});
+	} $queue->{first_epoch}, $queue->{uid}, $queue->{client}, $queue->{'message-id'});
 	print qq{INSERT INTO maillog(qid, first_epoch, uid, client, "message-id" )
 VALUES((SELECT qid FROM queueid WHERE queue_id = $queueid_sql),$VALUES);\n};
       }
