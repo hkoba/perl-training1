@@ -38,6 +38,25 @@ sub do_something {
   }
   \%summary;
 }
+
+sub cli_apply {
+  (my MY $self, my ($subSpec, @args)) = @_;
+  if (not defined $subSpec
+	or (not ref $subSpec)) {
+    my $method = $subSpec || 'cli_output';
+    $self->$method(@args);
+  }
+  elsif (ref $subSpec eq 'CODE') {
+    $subSpec->(@args);
+  }
+  elsif (ref $subSpec eq 'ARRAY') {
+    my ($method, @prefix) = @$subSpec;
+    $self->$method(@prefix, @args);
+  }
+  else {
+    Carp::croak "Invalid subSpec: $subSpec";
+  }
+}
 our %MONTH = qw(Jan 1 Feb 2 Mar 3 Apr 4 May 5 Jun 6 Jul 7 Aug 8 Sep 9 Oct 10 Nov 11 Dec 12);
 
 sub epoch_from_localtime {
