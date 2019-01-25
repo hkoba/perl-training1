@@ -10,6 +10,20 @@ use MOP4Import::Base::CLI_JSON -as_base
 
 use DBI;
 
+#========================================
+
+
+sub fetchall_hashref {
+  (my MY $self, my ($sql, @bind)) = @_;
+  my $sth = $self->DB->prepare($sql);
+  $sth->execute(@bind);
+  my @res;
+  while (my $row = $sth->fetchrow_hashref) {
+    push @res, $row;
+  }
+  @res;
+}
+
 sub DB {
   (my MY $self) = @_;
 
