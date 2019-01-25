@@ -13,6 +13,11 @@ use MOP4Import::Base::CLI_JSON -as_base
 	       qw/foo
 		  bar
 		  _prev_epoch/];
+use MOP4Import::Types
+  (QItem => [[fields => qw(queueid from to uid message-id client other first_epoch)]],
+   From => [[fields => qw(from nrcpt size comment)]],
+   To => [[fields => qw(status to delays comment delay dsn relay)]],
+   );
 
 use Time::Piece;
 use Time::Local;
