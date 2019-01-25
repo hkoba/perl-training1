@@ -35,6 +35,19 @@ sub after_new {
 
 #========================================
 
+#
+# cmd_... で始まる名前のメソッドは、この実行可能モジュールの正式な(CLI用の)コマンドとして扱われる
+# 正式なCLI用コマンドは、
+#   - 自分で入出力を管理する(特に出力処理)
+#   - help のコマンド一覧に名前が出る
+
+sub cmd_emit_sql_insert0 : Doc("SQL の INSERT文として出力") {
+  (my MY $self, my @files) = @_;
+  print "BEGIN;\n";
+  $self->do_group_by_queueid(as_sql => @files);
+  print "END;\n";
+}
+
 sub as_sql {
   (my MY $self, my QItem $queue) = @_;
 
