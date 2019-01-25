@@ -28,6 +28,16 @@ sub after_new {
 
 #========================================
 
+sub do_something {
+  (my MY $self, my @args) = @_;
+  my %summary;
+  foreach my $dict (@args) {
+    foreach my $key (keys %$dict) {
+      $summary{$key} += $dict->{$key};
+    }
+  }
+  \%summary;
+}
 our %MONTH = qw(Jan 1 Feb 2 Mar 3 Apr 4 May 5 Jun 6 Jul 7 Aug 8 Sep 9 Oct 10 Nov 11 Dec 12);
 
 sub epoch_from_localtime {
