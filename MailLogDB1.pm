@@ -10,6 +10,36 @@ use MOP4Import::Base::CLI_JSON -as_base
 
 use DBI;
 
+
+#========================================
+
+sub maillog_of_email {
+  (my MY $self, my $email) = @_;
+
+  $self->fetchall_hashref(
+    $self->sql_maillog_of_email
+  );
+}
+
+sub sql_maillog_of_email {
+  (my MY $self, my $email) = @_;
+  # "", qq{} は $変数や \x が中で使える
+  # '', q{} は↑これらも使えない
+  my $sql = q{with qid_email as (
+  select qid, email_id from "from" where email_id = (select email_id from email where email = ?)
+  union
+  select qid, email_id from "to" where email_id = (select email_id from email where email = ?)
+)
+
+select * from maillog
+left join "to" on maillog.qid = "to".qid and ("to".qid , "to".email_id) in (select * from qid_email)
+left join  "from" on maillog.qid = "from".qid and ("from".qid, "from".email_id) in  (select * from qid_email)
+where maillog.qid in (select qid from qid_email)
+};
+
+  ($sql, $email, $email);
+}
+
 #========================================
 
 
