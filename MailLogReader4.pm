@@ -12,6 +12,8 @@ use MOP4Import::Base::CLI_JSON -as_base
   , [fields => ['year' => doc => "年度を指定"],
 	       qw/foo
 		  bar
+		  _queueid_dict
+		  _email_dict
 		  _prev_epoch/];
 use MOP4Import::Types
   (QItem => [[fields => qw(queueid from to uid message-id client other first_epoch)]],
@@ -29,6 +31,68 @@ sub after_new {
   (my MY $self) = @_;
   $self->SUPER::after_new;
   $self->{year} //= localtime->year;
+}
+
+#========================================
+
+sub as_sql {
+  (my MY $self, my QItem $queue) = @_;
+
+  # テーブルqueueのインサート
+  # my $queueid_sql; $queueid_expr; ...
+  my $queueid_sql = $self->escape_or_null($queue->{'queueid'});
+  print qq{INSERT INTO queueid(queue_id) values($queueid_sql);\n}
+    if not $self->{_queueid_dict}{$queue->{'queueid'}}++;
+  {
+    # テーブルmaillogのインサート
+    my $VALUES = join(",", $self->escape_or_null(
+      $queue->{first_epoch}, $queue->{uid}, $queue->{client}, $queue->{'message-id'}));
+    print qq{INSERT INTO maillog(qid, first_epoch, uid, client, "message-id" )
+VALUES((SELECT qid FROM queueid WHERE queue_id = $queueid_sql),$VALUES);\n};
+  }
+
+  {
+    # テーブルtoのインサート
+    my $to_data = $queue->{to};
+    foreach my To $i (@$to_data) {
+      my $VALUES = join(",", $self->escape_or_null(
+	$i->{status}, $i->{delays}, $i->{comment}, $i->{delay}, $i->{dsn}, $i->{relay}));
+      my $escape_email = $self->escape_or_null($i->{to});
+      print qq{INSERT INTO email(email) values($escape_email);\n}
+	if not $self->{_email_dict}{$escape_email}++;
+      print qq{insert into "to"(qid, email_id, status, delays, comment, delay, dsn, relay)
+VALUES((SELECT qid FROM queueid WHERE queue_id = $queueid_sql), (SELECT email_id FROM email WHERE email = $escape_email), $VALUES);\n};
+    }
+  }
+
+  {
+    # テーブルfromのインサート
+    my $from_data = $queue->{from};
+    foreach my From $f (@$from_data) {
+      my $VALUES = join(",", $self->escape_or_null(
+	$f->{nrcpt}, $f->{size}, $f->{comment}
+      ));
+      my $escape_email = $self->escape_or_null($f->{from});
+      print qq{INSERT INTO email(email) values($escape_email);\n}
+	if not $self->{_email_dict}{$escape_email}++;
+      print qq{insert into "from"(qid, email_id, nrcpt, size, comment)
+values((SELECT qid FROM queueid WHERE queue_id = $queueid_sql), (SELECT email_id FROM email WHERE email = $escape_email), $VALUES);\n};
+    }
+  }
+
+}
+
+sub escape_or_null {
+  my ($self, @args) = @_;
+  my @result = map {
+    if (defined $_) {
+      $_ =~ s/'/''/g; # substitute
+      "'$_'"
+    } else {
+      "NULL";
+    }
+  } @args;
+  wantarray ? @result : $result[0];
 }
 
 #========================================
