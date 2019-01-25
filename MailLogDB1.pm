@@ -17,7 +17,7 @@ sub maillog_of_email {
   (my MY $self, my $email) = @_;
 
   $self->fetchall_hashref(
-    $self->sql_maillog_of_email
+    $self->sql_maillog_of_email($email)
   );
 }
 
