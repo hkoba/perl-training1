@@ -41,6 +41,10 @@ sub after_new {
 #   - 自分で入出力を管理する(特に出力処理)
 #   - help のコマンド一覧に名前が出る
 
+# sub safe_print {
+#   print @_ or die;
+# }
+
 sub cmd_emit_sql_insert0 : Doc("SQL の INSERT文として出力") {
   (my MY $self, my @files) = @_;
   print "BEGIN;\n";
