@@ -7,7 +7,11 @@ use strict;
 # }
 use File::AddInc;
 
-use MOP4Import::Base::CLI_JSON -as_base;
+use MOP4Import::Base::CLI_JSON -as_base
+  , [fields => qw/year
+		  foo
+		  bar
+		  _prev_epoch/];
 
 MY->run(\@ARGV) unless caller;
 
